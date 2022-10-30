@@ -6,15 +6,16 @@ const modalRoot = document.querySelector('#modal-root');
 export const Modal = ({ children, onClose }) => {
   useEffect(() => {
     window.addEventListener('keydown', hendleKeyDown);
+    function hendleKeyDown(e) {
+      if (e.code === 'Escape') {
+        onClose();
+      }
+    }
+
     return () => {
       window.removeEventListener('keydown', hendleKeyDown);
     };
   }, []);
-  function hendleKeyDown(e) {
-    if (e.code === 'Escape') {
-      onClose();
-    }
-  }
 
   function onCloseOverlay(e) {
     if (e.target === e.currentTarget) {
