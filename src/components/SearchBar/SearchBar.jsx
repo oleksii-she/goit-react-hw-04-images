@@ -1,54 +1,43 @@
-import React, { Component } from 'react';
 import { FaSearchMinus } from 'react-icons/fa';
 import css from './SearchBar.module.css';
 import toast, { Toaster } from 'react-hot-toast';
-export class SearchBar extends Component {
-  state = {
+import { Formik, Form, Field } from 'formik';
+
+export const SearchBar = ({ onSubmitSearchBar }) => {
+  const initialValues = {
     value: '',
-    page: 1,
   };
 
-  handlerInputName = e => {
-    this.setState({ value: e.target.value.toLowerCase() });
-  };
-
-  handlerSubmitForm = e => {
-    e.preventDefault();
-    if (this.state.value.trim() === '') {
-      toast.error('Type something', {
+  const handleSubmit = (values, { resetForm }) => {
+    const { value } = values;
+    if (value.trim() === '') {
+      return toast.error('Type something', {
         position: 'top-right',
       });
-      return;
     }
-    this.props.onSubmit(this.state);
-    this.reset();
+
+    onSubmitSearchBar(value);
+    resetForm();
   };
 
-  reset = () => {
-    this.setState({ value: '' });
-  };
-  render() {
-    const { value } = this.state;
-
-    return (
-      <header className={css.Searchbar}>
-        <form className={css.search_form} onSubmit={this.handlerSubmitForm}>
+  return (
+    <header className={css.Searchbar}>
+      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+        <Form className={css.search_form}>
           <button type="submit" className={css.searchForm_button}>
             <FaSearchMinus />
           </button>
-
-          <input
+          <Field
             className={css.SearchForm_input}
             type="text"
             autoComplete="off"
             autoFocus
             placeholder="Search images and photos"
-            value={value}
-            onChange={this.handlerInputName}
+            name="value"
           />
           <Toaster />
-        </form>
-      </header>
-    );
-  }
-}
+        </Form>
+      </Formik>
+    </header>
+  );
+};

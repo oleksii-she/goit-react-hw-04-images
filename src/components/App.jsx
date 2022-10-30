@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 import { pixabayApi } from './api';
@@ -12,101 +12,79 @@ import { ErrorUser } from './Error/ErrorUser';
 
 import css from './app.module.css';
 
-export class App extends Component {
-  state = {
-    array: [],
-    searchValue: '',
-    modalImgSrc: '',
-    showModal: false,
-    page: 1,
-    status: 'idle',
-    hidden: false,
-  };
+export const App = () => {
+  const [array, setArray] = useState([]);
+  const [searchValue, setSearchValue] = useState('');
+  const [modalImgSrc, setModalImgSrc] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState('idle');
+  const [hidden, setHidden] = useState(false);
 
-  async componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.searchValue !== this.state.searchValue ||
-      prevState.page !== this.state.page
-    ) {
-      try {
-        this.setState({ status: 'pending' });
-        const arrayObj = await pixabayApi(
-          this.state.searchValue,
-          this.state.page
-        );
-
-        console.log(arrayObj);
-        if (arrayObj.hits.length > 0) {
-          this.setState(prevState => {
-            return {
-              array: [...prevState.array, ...arrayObj.hits],
-              status: 'resolved',
-            };
-          });
-        } else {
-          toast.error(
-            `Sorry, but nothing was found for your query ${this.state.searchValue}`,
-            { position: 'top-right' }
-          );
-          this.setState({ status: 'idle' });
-          return;
-        }
-
-        if (Math.round(arrayObj.totalHits / 12) < this.state.page) {
-          toast.error(
-            `We are sorry, but you have reached the end of search results`,
-            { position: 'top-right' }
-          );
-
-          this.setState({
-            hidden: false,
-          });
-        }
-
-        if (arrayObj.hits.length > 11) {
-          this.setState({
-            hidden: true,
-          });
-        }
-      } catch (error) {
-        this.setState({
-          status: 'rejected',
-        });
-      }
-    }
-  }
-
-  onOpenModal = e => {
+  const onOpenModal = e => {
     const imgForModal = e.target.dataset.src;
-    this.setState(({ showModal, modalImgSrc }) => ({
-      modalImgSrc: imgForModal,
-      showModal: true,
-    }));
+    setShowModal(true);
+    setModalImgSrc(imgForModal);
   };
 
-  onCloseModal = () => {
-    this.setState(({ showModal, modalImgSrc }) => ({
-      modalImgSrc: '',
-      showModal: false,
-    }));
-  };
+  useEffect(() => {
+    if (searchValue === '') {
+      return;
+    }
 
-  hendlerFormSubmit = newState => {
-    if (this.state.searchValue !== newState.value) {
-      this.setState(({ searchValue, page }) => ({
-        searchValue: newState.value,
-        array: [],
-        page: 1,
-      }));
+    apiPixabayResponce(searchValue, page);
+  }, [searchValue, page]);
+
+  const apiPixabayResponce = async (searchValue, page) => {
+    try {
+      setStatus('pending');
+
+      const arrayObj = await pixabayApi(searchValue, page);
+
+      if (arrayObj.hits.length > 0) {
+        setArray(prevState => [...prevState, ...arrayObj.hits]);
+        setStatus('resolved');
+      } else {
+        toast.error(
+          `Sorry, but nothing was found for your query ${searchValue}`,
+          { position: 'top-right' }
+        );
+        setStatus('idle');
+        return;
+      }
+
+      if (Math.round(arrayObj.totalHits / 12) < page) {
+        toast.error(
+          `We are sorry, but you have reached the end of search results`,
+          { position: 'top-right' }
+        );
+        setHidden(false);
+      }
+      if (arrayObj.hits.length > 11) {
+        setHidden(true);
+      }
+    } catch (error) {
+      setStatus('rejected');
     }
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const onCloseModal = () => {
+    setShowModal(false);
+    setModalImgSrc('');
+  };
 
-    if (this.state.page > 1) {
+  const hendlerFormSubmit = value => {
+    if (searchValue !== value) {
+      setSearchValue(value);
+      setArray([]);
+      setPage(1);
+    }
+  };
+
+  const loadMore = () => {
+    setPage(p => p + 1);
+
+    if (page > 1) {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
         behavior: 'smooth',
@@ -114,33 +92,26 @@ export class App extends Component {
     }
   };
 
-  render() {
-    const { searchValue, array, showModal, modalImgSrc, status, hidden } =
-      this.state;
-
-    if (status === 'rejected') {
-      return (
-        <div className={css.App}>
-          <SearchBar onSubmit={this.hendlerFormSubmit} />
-          <ErrorUser />
-        </div>
-      );
-    }
-
+  if (status === 'rejected') {
     return (
       <div className={css.App}>
-        <SearchBar onSubmit={this.hendlerFormSubmit} />
-        {searchValue && (
-          <ImageGallery data={array} clickModal={this.onOpenModal} />
-        )}
-        {hidden === true && <Button loadMore={this.loadMore} />}
-        {showModal && (
-          <Modal onClose={this.onCloseModal}>
-            <img src={modalImgSrc} alt="" />
-          </Modal>
-        )}
-        {status === 'pending' && <Loader />}
+        <SearchBar onSubmit={hendlerFormSubmit} />
+        <ErrorUser />
       </div>
     );
   }
-}
+  console.log(status);
+  return (
+    <div className={css.App}>
+      <SearchBar onSubmitSearchBar={hendlerFormSubmit} />
+      {searchValue && <ImageGallery data={array} clickModal={onOpenModal} />}
+      {hidden === true && <Button loadMore={loadMore} />}
+      {showModal && (
+        <Modal onClose={onCloseModal}>
+          <img src={modalImgSrc} alt="" />
+        </Modal>
+      )}
+      {status === 'pending' && <Loader />}
+    </div>
+  );
+};
