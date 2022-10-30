@@ -100,7 +100,7 @@ export const App = () => {
       </div>
     );
   }
-  console.log(status);
+
   return (
     <div className={css.App}>
       <SearchBar onSubmitSearchBar={hendlerFormSubmit} />

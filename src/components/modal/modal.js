@@ -10,17 +10,17 @@ export const Modal = ({ children, onClose }) => {
       window.removeEventListener('keydown', hendleKeyDown);
     };
   }, []);
-
-  const hendleKeyDown = e => {
+  function hendleKeyDown(e) {
     if (e.code === 'Escape') {
       onClose();
     }
-  };
-  const onCloseOverlay = e => {
+  }
+
+  function onCloseOverlay(e) {
     if (e.target === e.currentTarget) {
       onClose();
     }
-  };
+  }
 
   return createPortal(
     <div className={css.Overlay} onClick={e => onCloseOverlay(e)}>
