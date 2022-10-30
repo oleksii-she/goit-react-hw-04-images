@@ -15,7 +15,7 @@ export const Modal = ({ children, onClose }) => {
     return () => {
       window.removeEventListener('keydown', hendleKeyDown);
     };
-  }, []);
+  }, [onClose]);
 
   function onCloseOverlay(e) {
     if (e.target === e.currentTarget) {
